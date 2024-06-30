@@ -34,7 +34,12 @@
 
 step0_repl:
 	echo "building step0_repl..."
-	go build -o step0_repl .
+	go build -o step0_repl ./steps/step0/.
+	echo "built step0_repl!"
+
+step1_read_print:
+	echo "building step0_repl..."
+	go build -o step1_read_print ./steps/step1/.
 	echo "built step0_repl!"
 
 clean:
