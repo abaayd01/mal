@@ -1,9 +1,11 @@
 package main
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestTokenize(t *testing.T) {
-	input := "(+ 1 (myFun true false nil))"
+	input := `(+ 1 "hello" (myFun true false nil))`
 	tokens := tokenize(input)
 
 	expectedTokens := []Token{
@@ -18,6 +20,10 @@ func TestTokenize(t *testing.T) {
 		{
 			Type:    INT,
 			Literal: "1",
+		},
+		{
+			Type:    STRING,
+			Literal: "hello",
 		},
 		{
 			Type:    LPAREN,
@@ -75,4 +81,10 @@ func testToken(t *testing.T, tc int, expected, actual Token) {
 	if actual.Literal != expected.Literal {
 		t.Fatalf("token #%d, literal wrong. expected=%q, got=%q", tc, expected.Type, actual.Literal)
 	}
+}
+
+func TestReadStr(t *testing.T) {
+	input := "(+ 1 (+ 2 (+ true false)))"
+	ast := read_str(input)
+	t.Log(ast)
 }

@@ -1,6 +1,12 @@
 package main
 
-// import "runtime"
+import (
+	"fmt"
+	"strconv"
+)
+
+// "fmt"
+// "runtime"
 
 // "github.com/chzyer/readline"
 
@@ -39,7 +45,12 @@ func _print(in string) string {
 }
 
 func read_str(in string) MalType {
-	return nil
+	tokens := tokenize(in)
+	reader := &Reader{
+		tokens:      tokens,
+		curPosition: 0,
+	}
+	return read_form(reader)
 }
 
 func tokenize(in string) []Token {
@@ -59,20 +70,91 @@ func tokenize(in string) []Token {
 }
 
 func read_form(reader *Reader) MalType {
-	return nil
+	curToken := reader.peek()
+
+	if curToken.Type == LPAREN {
+		return read_list(reader)
+	}
+
+	return read_atom(reader)
+}
+
+func read_list(reader *Reader) ListMalType {
+	result := []MalType{}
+
+	nextToken := reader.next()
+
+	for nextToken.Type != EOF {
+		curToken := reader.peek()
+		if curToken.Type != RPAREN {
+			result = append(result, read_form(reader))
+			nextToken = reader.next()
+		} else {
+			return result
+		}
+	}
+
+	return result
 }
 
 func read_atom(reader *Reader) MalType {
+	curToken := reader.peek()
+
+	switch curToken.Type {
+	case INT:
+		return reader.parseIntegerLiteral(curToken)
+	case SYMBOL:
+		return reader.parseSymbol(curToken)
+	case TRUE:
+		return reader.parseBooleanLiteral(curToken)
+	case FALSE:
+		return reader.parseBooleanLiteral(curToken)
+	case NIL:
+		return &NilMalType{}
+	case EOF:
+		return "EOF"
+	}
+
 	return nil
+}
+
+func (r *Reader) parseIntegerLiteral(curToken Token) MalType {
+	lit := &IntMalType{token: curToken}
+
+	value, err := strconv.ParseInt(curToken.Literal, 0, 64)
+	if err != nil {
+		errMsg := fmt.Sprintf("could not parse %q as integer", curToken.Literal)
+		r.errors = append(r.errors, errMsg)
+		return nil
+	}
+
+	lit.value = value
+
+	return lit
+}
+
+func (r *Reader) parseBooleanLiteral(curToken Token) MalType {
+	return &BooleanMalType{
+		token: curToken,
+		value: curToken.Type == TRUE,
+	}
+}
+
+func (r *Reader) parseSymbol(curToken Token) MalType {
+	return &SymbolMalType{
+		token: curToken,
+		value: curToken.Literal,
+	}
 }
 
 type Reader struct {
 	curPosition int
 	tokens      []Token
+	errors      []string
 }
 
 func (r *Reader) peek() Token {
-	if r.curPosition > len(r.tokens) {
+	if r.curPosition >= len(r.tokens) {
 		return Token{
 			Type:    EOF,
 			Literal: "",
@@ -83,7 +165,7 @@ func (r *Reader) peek() Token {
 }
 
 func (r *Reader) next() Token {
-	if r.curPosition > len(r.tokens) {
+	if r.curPosition >= len(r.tokens) {
 		return Token{
 			Type:    EOF,
 			Literal: "",
@@ -95,7 +177,35 @@ func (r *Reader) next() Token {
 	return token
 }
 
-type MalType interface{}
+type MalType interface {
+	// TokenLiteral() string
+	// String() string
+}
+
+type ListMalType []MalType
+
+type SymbolMalType struct {
+	token Token
+	value string
+}
+
+type BooleanMalType struct {
+	token Token
+	value bool
+}
+
+type NilMalType struct {
+}
+
+type IntMalType struct {
+	token Token
+	value int64
+}
+
+type StringMalType struct {
+	token Token
+	value string
+}
 
 type TokenType string
 
