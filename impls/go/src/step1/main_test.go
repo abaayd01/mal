@@ -86,5 +86,10 @@ func testToken(t *testing.T, tc int, expected, actual Token) {
 func TestReadStr(t *testing.T) {
 	input := "(+ 1 (+ 2 (+ true false)))"
 	ast := read_str(input)
+	expectedOutputString := "(+ 1 (+ 2 (+ true false)))"
+
+	if ast.String() != expectedOutputString {
+		t.Fatalf("did not get a matching (string output) for the ast. expected=%s, got=%s", expectedOutputString, ast.String())
+	}
 	t.Log(ast)
 }

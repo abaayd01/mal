@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 // "fmt"
@@ -112,7 +113,7 @@ func read_atom(reader *Reader) MalType {
 	case NIL:
 		return &NilMalType{}
 	case EOF:
-		return "EOF"
+		return nil
 	}
 
 	return nil
@@ -179,14 +180,33 @@ func (r *Reader) next() Token {
 
 type MalType interface {
 	// TokenLiteral() string
-	// String() string
+	String() string
 }
 
 type ListMalType []MalType
 
+func (l ListMalType) String() string {
+	var sb strings.Builder
+
+	sb.WriteString("(")
+	for i, node := range l {
+		sb.WriteString(node.String())
+		if i < len(l)-1 {
+			sb.WriteString(" ")
+		}
+	}
+	sb.WriteString(")")
+
+	return sb.String()
+}
+
 type SymbolMalType struct {
 	token Token
 	value string
+}
+
+func (s *SymbolMalType) String() string {
+	return s.value
 }
 
 type BooleanMalType struct {
@@ -194,12 +214,24 @@ type BooleanMalType struct {
 	value bool
 }
 
+func (b *BooleanMalType) String() string {
+	return fmt.Sprintf("%v", b.value)
+}
+
 type NilMalType struct {
+}
+
+func (n *NilMalType) String() string {
+	return "nil"
 }
 
 type IntMalType struct {
 	token Token
 	value int64
+}
+
+func (i *IntMalType) String() string {
+	return fmt.Sprintf("%d", i.value)
 }
 
 type StringMalType struct {
